@@ -1,7 +1,7 @@
 
 #root{
   background: #e7e7e7;
-  height: 100%;
+  min-height: 100%;
 }
 
 html,body{

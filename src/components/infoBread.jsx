@@ -2,8 +2,7 @@ import React from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import Paper from '@material-ui/core/Paper';
 import Grid from '@material-ui/core/Grid';
-import { ButtonBase, Typography } from '@material-ui/core';
-import SyncIcon from '@material-ui/icons/Sync';
+import { Typography } from '@material-ui/core';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -28,6 +27,7 @@ export default function InfoBread(props) {
           <Grid item xs sm={12} container>
             <Grid item xs container direction="column" spacing={2}>
               <Grid
+                container
                 item
                 xs
                 direction="column"
