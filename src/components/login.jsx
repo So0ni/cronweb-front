@@ -18,10 +18,18 @@ import DeleteIcon from '@material-ui/icons/Delete';
 import HistoryIcon from '@material-ui/icons/History';
 import Typography from '@material-ui/core/Typography';
 import Snackbar from '@material-ui/core/Snackbar';
+import { checkConnection, checkSecret } from '../utils/api';
+import {
+  getServerHistory,
+  addServerHistory,
+  delServerHistoryByKey,
+  setCurrentLogin,
+  getCurrentLogin,
+} from '../utils/storage';
 
 const historyRows = [
-  { url: 'http://127.0.0.1:8000', secret: '', key: 'randomKey0' },
-  { url: 'http://127.0.0.1:8000', secret: 'passwd', key: 'randomKey1' },
+  { server: 'http://127.0.0.1:8000', secret: '', key: 'randomKey0' },
+  { server: 'http://127.0.0.1:8000', secret: 'passwd', key: 'randomKey1' },
 ];
 
 const useStyles = makeStyles((theme) => ({
@@ -65,23 +73,90 @@ const useStyles = makeStyles((theme) => ({
 
 export default function LoginPage(props) {
   const classes = useStyles();
-  const [snackbarOpen, setSnackbarOpen] = React.useState(true);
+  const [snackbarOpen, setSnackbarOpen] = React.useState(false);
+  const [snackbarMsg, setSnackbarMsg] = React.useState('');
+  const [server, setServer] = React.useState('');
+  const [secret, setSecret] = React.useState('');
+  const [historyRows, setHistoryRows] = React.useState(getServerHistory());
+  const { logged, setLogged } = props;
+  const currentLogin = getCurrentLogin();
 
-  const handleClose = (event, reason) => {
+  const handleSnackbarClose = (event, reason) => {
     if (reason === 'clickaway') {
       return;
     }
     setSnackbarOpen(false);
   };
 
+  const showSnackbar = (msg) => {
+    setSnackbarMsg(msg);
+    setSnackbarOpen(true);
+  };
+
+  const doLogin = (_server, _secret) => {
+    checkConnection(_server).then((res) => {
+      if (res === true) {
+        console.log(_server, '连接正常');
+        checkSecret(_server, _secret).then((res) => {
+          if (res === true) {
+            console.log(_server, '密码正确');
+            addServerHistory(_server, _secret);
+            setHistoryRows(getServerHistory());
+            setCurrentLogin(_server, _secret);
+            console.log('登陆成功');
+            setLogged(true);
+          } else {
+            console.error(_server, '密码错误');
+            showSnackbar('错误的密码信息');
+            return;
+          }
+        });
+      } else {
+        showSnackbar('服务器连接失败');
+        console.error(_server, '连接失败');
+        return;
+      }
+    });
+  };
+
+  if (currentLogin.server !== null) {
+    doLogin(currentLogin.server, currentLogin.secret);
+  }
+
+  const handleLoginClick = () => {
+    let server_url = server;
+    if (server === '') {
+      showSnackbar('服务器地址不能为空');
+      return;
+    }
+    if (server_url.slice(-1) === '/') {
+      server_url = server_url.slice(0, -1);
+    }
+    if (/^(http:)|(https:)+/i.exec(server_url) === null) {
+      showSnackbar('服务器地址应以http://或https://开头');
+      return;
+    }
+    doLogin(server, secret);
+  };
+
+  const handleHistoryClick = (_server, _secret) => {
+    doLogin(_server, _secret);
+  };
+
+  const handleDelHistory = (key) => {
+    console.log('删除历史记录', key);
+    delServerHistoryByKey(key);
+    setHistoryRows(getServerHistory());
+  };
+
   return (
     <div className={classes.root}>
       <Snackbar
-        autoHideDuration={6000}
-        onClose={handleClose}
+        autoHideDuration={3000}
+        onClose={handleSnackbarClose}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
         open={snackbarOpen}
-        message="登陆失败"
+        message={snackbarMsg}
       />
 
       <div className={classes.loginDialog}>
@@ -99,7 +174,11 @@ export default function LoginPage(props) {
                 <StorageIcon />
               </Grid>
               <Grid item xs>
-                <TextField id="server" label="服务器地址" />
+                <TextField
+                  id="server"
+                  label="服务器地址"
+                  onBlur={(e) => setServer(e.target.value)}
+                />
               </Grid>
             </Grid>
           </div>
@@ -109,14 +188,19 @@ export default function LoginPage(props) {
                 <VpnKeyIcon />
               </Grid>
               <Grid item xs>
-                <TextField id="secret" label="密码(可选)" type="password" />
+                <TextField
+                  id="secret"
+                  label="密码(可选)"
+                  type="password"
+                  onBlur={(e) => setSecret(e.target.value)}
+                />
               </Grid>
             </Grid>
           </div>
         </Grid>
 
         <div className={classes.loginButton}>
-          <Button variant="outlined" color="primary">
+          <Button variant="outlined" color="primary" onClick={handleLoginClick}>
             登陆
           </Button>
         </div>
@@ -125,15 +209,25 @@ export default function LoginPage(props) {
           <List component="nav" aria-label="main mailbox folders">
             {historyRows.map((row, idx) => {
               return (
-                <ListItem button key={row.key}>
+                <ListItem
+                  button
+                  key={row.key}
+                  onClick={() => handleHistoryClick(row.server, row.secret)}
+                >
                   <ListItemIcon>
                     <HistoryIcon />
                   </ListItemIcon>
                   <ListItemText
-                    primary={row.secret.length === 0 ? row.url : row.url + ' *'}
+                    primary={
+                      row.secret.length === 0 ? row.server : row.server + ' *'
+                    }
                   />
                   <ListItemSecondaryAction>
-                    <IconButton edge="end" aria-label="delete">
+                    <IconButton
+                      edge="end"
+                      aria-label="delete"
+                      onClick={() => handleDelHistory(row.key)}
+                    >
                       <DeleteIcon />
                     </IconButton>
                   </ListItemSecondaryAction>
