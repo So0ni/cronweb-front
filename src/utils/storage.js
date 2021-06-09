@@ -63,6 +63,20 @@ function delCurrentLogin() {
   localStorage.removeItem('currentLogin');
 }
 
+function setItem(key, value) {
+  localStorage.setItem(key, JSON.stringify(value));
+}
+
+function getItem(key, defaultValue) {
+  let value = localStorage.getItem(key);
+  if (value) {
+    value = JSON.parse(value);
+  } else {
+    value = defaultValue || {};
+  }
+  return value;
+}
+
 export {
   getServerHistory,
   addServerHistory,
@@ -70,4 +84,6 @@ export {
   setCurrentLogin,
   getCurrentLogin,
   delCurrentLogin,
+  getItem,
+  setItem,
 };

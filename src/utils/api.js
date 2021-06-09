@@ -1,3 +1,6 @@
+import { getCurrentLogin, delCurrentLogin, getItem, setItem } from './storage';
+import moment from 'moment';
+
 const URI = {
   sysConnChk: {
     uri: (server) => `${server}/api/sys/connection`,
@@ -30,23 +33,23 @@ const URI = {
     auth: true,
   },
   getAllRunningRecords: {
-    uri: () => '/api/running_jobs',
-    method: 'get',
+    uri: (server) => `${server}/api/running_jobs`,
+    method: 'GET',
     auth: true,
   },
   getAllRecords: {
-    uri: () => '/api/logs',
-    method: 'get',
+    uri: (server) => `${server}/api/logs`,
+    method: 'GET',
     auth: true,
   },
   getRecordsByUUID: {
-    uri: (uuid) => `/api/job/${uuid}/logs`,
-    method: 'get',
+    uri: (server, uuid) => `${server}/api/job/${uuid}/logs`,
+    method: 'GET',
     auth: true,
   },
   getLogByShotId: {
-    uri: (shot_id) => `/api/log/${shot_id}`,
-    method: 'get',
+    uri: (server, shot_id) => `${server}/api/log/${shot_id}`,
+    method: 'GET',
     auth: true,
   },
 };
@@ -59,17 +62,19 @@ String.prototype.format = function () {
   });
 };
 
-function APIError(msg) {
+function APIError(msg, code) {
   this.name = 'APIError';
   this.message = msg || '连接正常但是返回Code并非0';
+  this.code = code;
 }
 
 APIError.prototype = Object.create(Error.prototype);
 APIError.prototype.constructor = APIError;
 
-async function request(url, method, data, secret) {
+async function request(url, method, secret, data) {
   let headerSecret = {};
-  if (secret !== undefined) {
+  // 假设不允许空密码
+  if (secret) {
     headerSecret = { Authorization: `Bearer ${secret}` };
   }
   let bodyRequest = {};
@@ -90,7 +95,7 @@ async function request(url, method, data, secret) {
   const respObj = await resp.json();
   if (respObj.code !== 0) {
     console.error(respObj);
-    throw new APIError(respObj.response);
+    throw new APIError(respObj.response, respObj.code);
   }
   return respObj.response;
 }
@@ -119,4 +124,111 @@ async function checkSecret(server, secret) {
   }
 }
 
-export { checkConnection, checkSecret };
+async function getAllJobs(setLogin) {
+  const { server, secret } = getCurrentLogin();
+  try {
+    const resp = await request(
+      URI.getAllJobs.uri(server),
+      URI.getAllJobs.method,
+      secret,
+    );
+    setItem('jobList', resp);
+    console.log('获取到', resp.length, '条job数据');
+    return resp;
+  } catch (e) {
+    console.error(e);
+    if (e.type !== 'APIError') {
+      // 非APIError则是网络错误
+      delCurrentLogin();
+      setLogin(false);
+    }
+    return null;
+  }
+}
+
+async function recordNameJoin(recordList) {
+  let jobList = getItem('jobList', []);
+  let flagOutdated = 0; // 当record中的uuid并未出现在job中时flag置未1，证明job已过期需要更新
+  if (recordList.length === 0 && jobList.length === 0) {
+    // 没有任何任务和记录
+    return;
+  }
+  if (recordList.length !== 0 && jobList.length === 0) {
+    jobList = await getAllJobs();
+  }
+  const uuidMapping = {};
+  jobList.map((value) => {
+    uuidMapping[value.uuid] = value.name;
+  });
+  for (let record of recordList) {
+    if (!uuidMapping.hasOwnProperty(record.uuid)) {
+      console.log(
+        'record中的uuid信息不存在于job中，job信息可能已过期',
+        record.uuid,
+      );
+      flagOutdated = 1;
+      break;
+    }
+    record['name'] = uuidMapping[record.uuid];
+  }
+  if (flagOutdated === 1) {
+    console.log('job信息已过期，重新获取');
+    await getAllJobs();
+    await recordNameJoin(recordList);
+  }
+}
+
+async function getAllRecords(setLogin) {
+  const { server, secret } = getCurrentLogin();
+  try {
+    const resp = await request(
+      URI.getAllRecords.uri(server),
+      URI.getAllRecords.method,
+      secret,
+    );
+    console.log('获取到', resp.length, '条record数据');
+    await recordNameJoin(resp);
+    setItem('recordList', resp);
+    return resp;
+  } catch (e) {
+    console.error(e);
+    if (e.type !== 'APIError') {
+      // 非APIError则是网络错误
+      delCurrentLogin();
+      setLogin(false);
+    }
+    return null;
+  }
+}
+
+async function updateTables(setLogin, setJobList, setRecordList, setBreadInfo) {
+  const jobList = await getAllJobs(setLogin);
+  setJobList(jobList);
+  const recordList = await getAllRecords(setLogin);
+  setRecordList(recordList);
+
+  const breadInfo = {
+    totalJobCount: 0,
+    todayRecordCount: 0,
+    todayFailedCount: 0,
+  };
+  breadInfo.totalJobCount = jobList.length;
+
+  const nowString = moment().format('YYYY-MM-DD');
+  const todayStart = moment(nowString);
+  const todayEnd = moment(nowString).add(moment.duration(24, 'hours'));
+  console.log(todayStart.format(), '\n', todayEnd.format());
+
+  for (let record of recordList) {
+    let dateStart = moment(record.date_start);
+    if (dateStart.isAfter(todayStart) && dateStart.isBefore(todayEnd)) {
+      breadInfo.todayRecordCount += 1;
+      if (record.state === 'ERROR' || record.state === 'KILLED') {
+        breadInfo.todayFailedCount += 1;
+      }
+    }
+  }
+  setBreadInfo(breadInfo);
+}
+
+export { checkConnection, checkSecret, updateTables };

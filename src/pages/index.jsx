@@ -1,6 +1,4 @@
-import styles from './index.less';
-import React from 'react';
-import ReactDOM from 'react-dom';
+import React, { useEffect } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import Paper from '@material-ui/core/Paper';
 import Grid from '@material-ui/core/Grid';
@@ -10,6 +8,7 @@ import SyncIcon from '@material-ui/icons/Sync';
 import AccessAlarmIcon from '@material-ui/icons/AccessAlarm';
 import WarningIcon from '@material-ui/icons/Warning';
 import RecordTable from '../components/recordTable';
+import { updateTables } from '../utils/api';
 
 const jobRows = [
   {
@@ -87,10 +86,29 @@ const useStyles = makeStyles((theme) => ({
   breadIcon: {
     fontSize: '48px',
   },
+  title: {
+    background: 'rgb(121, 242, 157)',
+  },
 }));
 
-export default function App() {
+export default function App(props) {
   const classes = useStyles();
+  const [jobList, setJobList] = React.useState([]);
+  const [recordList, setRecordList] = React.useState([]);
+  const [breadInfo, setBreadInfo] = React.useState({
+    totalJobCount: 0,
+    todayRecordCount: 0,
+    todayFailedCount: 0,
+  });
+  const { setLogged } = props;
+
+  useEffect(() => {
+    const update = async () => {
+      console.log('更新数据');
+      await updateTables(setLogged, setJobList, setRecordList, setBreadInfo);
+    };
+    update();
+  }, []);
 
   return (
     <Grid container direction="column" justify="flex-start" alignItems="center">
@@ -98,7 +116,7 @@ export default function App() {
         <Grid item xs sm container>
           <InfoBread
             text={'总任务数'}
-            value={10}
+            value={breadInfo.totalJobCount}
             color={{ color: 'rgba(24, 144, 255, 0.85)' }}
           >
             <AccessAlarmIcon className={classes.breadIcon} />
@@ -107,7 +125,7 @@ export default function App() {
         <Grid item xs sm container>
           <InfoBread
             text={'今日运行次数'}
-            value={101}
+            value={breadInfo.todayRecordCount}
             color={{ color: 'rgba(0, 171, 85, 0.85)' }}
           >
             <SyncIcon className={classes.breadIcon} />
@@ -116,7 +134,7 @@ export default function App() {
         <Grid item xs sm container>
           <InfoBread
             text={'今日失败次数'}
-            value={5}
+            value={breadInfo.todayFailedCount}
             color={{ color: 'rgba(255, 72, 66, 0.85)' }}
           >
             <WarningIcon className={classes.breadIcon} />
@@ -125,11 +143,11 @@ export default function App() {
       </Grid>
 
       <Grid className={classes.columnGrid}>
-        <JobTable rows={jobRows} />
+        <JobTable rows={jobList} setRows={setJobList} />
       </Grid>
 
       <Grid className={classes.columnGrid}>
-        <RecordTable rows={recordRows} />
+        <RecordTable rows={recordList} setRows={setRecordList} />
       </Grid>
     </Grid>
   );
