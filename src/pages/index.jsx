@@ -100,6 +100,7 @@ export default function App(props) {
     todayRecordCount: 0,
     todayFailedCount: 0,
   });
+  const [tableUpdate, setTableUpdate] = React.useState(0);
   const { setLogged } = props;
 
   useEffect(() => {
@@ -108,7 +109,7 @@ export default function App(props) {
       await updateTables(setLogged, setJobList, setRecordList, setBreadInfo);
     };
     update();
-  }, []);
+  }, [tableUpdate]);
 
   return (
     <Grid container direction="column" justify="flex-start" alignItems="center">
@@ -143,7 +144,11 @@ export default function App(props) {
       </Grid>
 
       <Grid className={classes.columnGrid}>
-        <JobTable rows={jobList} setRows={setJobList} />
+        <JobTable
+          rows={jobList}
+          setRows={setJobList}
+          tableUpdate={setTableUpdate}
+        />
       </Grid>
 
       <Grid className={classes.columnGrid}>

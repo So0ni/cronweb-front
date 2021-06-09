@@ -25,6 +25,7 @@ import {
   delServerHistoryByKey,
   setCurrentLogin,
   getCurrentLogin,
+  delCurrentLogin,
 } from '../utils/storage';
 
 const historyRows = [
@@ -108,11 +109,12 @@ export default function LoginPage(props) {
           } else {
             console.error(_server, '密码错误');
             showSnackbar('错误的密码信息');
-            return;
+            delCurrentLogin();
           }
         });
       } else {
         showSnackbar('服务器连接失败');
+        delCurrentLogin();
         console.error(_server, '连接失败');
         return;
       }
@@ -136,7 +138,7 @@ export default function LoginPage(props) {
       showSnackbar('服务器地址应以http://或https://开头');
       return;
     }
-    doLogin(server, secret);
+    doLogin(server_url, secret);
   };
 
   const handleHistoryClick = (_server, _secret) => {
@@ -207,7 +209,7 @@ export default function LoginPage(props) {
 
         <div className={classes.historyList}>
           <List component="nav" aria-label="main mailbox folders">
-            {historyRows.map((row, idx) => {
+            {historyRows.map((row) => {
               return (
                 <ListItem
                   button

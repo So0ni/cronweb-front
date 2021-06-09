@@ -63,7 +63,7 @@ String.prototype.format = function () {
 };
 
 function APIError(msg, code) {
-  this.name = 'APIError';
+  this.type = 'APIError';
   this.message = msg || '连接正常但是返回Code并非0';
   this.code = code;
 }
@@ -231,4 +231,17 @@ async function updateTables(setLogin, setJobList, setRecordList, setBreadInfo) {
   setBreadInfo(breadInfo);
 }
 
-export { checkConnection, checkSecret, updateTables };
+async function addJob(data) {
+  const { server, secret } = getCurrentLogin();
+  try {
+    await request(URI.addJob.uri(server), URI.addJob.method, secret, data);
+    return 0;
+  } catch (e) {
+    if (e.type === 'APIError') {
+      // 2 为cron表达式无效
+      return e.code;
+    }
+  }
+}
+
+export { checkConnection, checkSecret, updateTables, addJob };

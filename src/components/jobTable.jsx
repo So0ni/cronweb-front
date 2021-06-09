@@ -17,9 +17,12 @@ import Checkbox from '@material-ui/core/Checkbox';
 import IconButton from '@material-ui/core/IconButton';
 import Tooltip from '@material-ui/core/Tooltip';
 import DeleteIcon from '@material-ui/icons/Delete';
-import AddIcon from '@material-ui/icons/Add';
 import Empty from './empty';
 import AddJob from './addJob';
+import { Fade, Popover, Popper } from '@material-ui/core';
+import { CronIntro } from './cronIntro';
+import HelpIcon from '@material-ui/icons/Help';
+import { ControlPoint } from '@material-ui/icons';
 
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -144,7 +147,12 @@ const useToolbarStyles = makeStyles((theme) => ({
 
 const EnhancedTableToolbar = (props) => {
   const classes = useToolbarStyles();
-  const { numSelected } = props;
+  const { numSelected, setAnchorEl, setPopperOpen } = props;
+
+  const handleCronHelpClick = (event) => {
+    setAnchorEl(event.currentTarget);
+    setPopperOpen(true);
+  };
 
   return (
     <Toolbar
@@ -179,11 +187,18 @@ const EnhancedTableToolbar = (props) => {
           </IconButton>
         </Tooltip>
       ) : (
-        <Tooltip title="新建任务">
-          <IconButton aria-label="新建任务" onClick={props.onAddJobClick}>
-            <AddIcon />
-          </IconButton>
-        </Tooltip>
+        <div style={{ display: 'flex' }}>
+          <Tooltip title="Cron帮助">
+            <IconButton aria-label="Cron帮助" onClick={handleCronHelpClick}>
+              <HelpIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="新建任务">
+            <IconButton aria-label="新建任务" onClick={props.onAddJobClick}>
+              <ControlPoint color="secondary" />
+            </IconButton>
+          </Tooltip>
+        </div>
       )}
     </Toolbar>
   );
@@ -223,7 +238,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export default function JobTable(props) {
-  const rows = props.rows;
+  const { rows, setRows, tableUpdate } = props;
   const classes = useStyles();
   const [order, setOrder] = React.useState('asc');
   const [orderBy, setOrderBy] = React.useState('calories');
@@ -231,6 +246,8 @@ export default function JobTable(props) {
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
   const [addJobOpen, setAddJobOpen] = React.useState(false);
+  const [anchorEl, setAnchorEl] = React.useState(null);
+  const [popperOpen, setPopperOpen] = React.useState(false);
 
   const handleAddJobClick = () => {
     setAddJobOpen(true);
@@ -287,12 +304,35 @@ export default function JobTable(props) {
 
   return (
     <div className={classes.root}>
-      <AddJob open={addJobOpen} setOpen={setAddJobOpen} />
+      <AddJob
+        open={addJobOpen}
+        setOpen={setAddJobOpen}
+        jobs={rows}
+        setJobs={setRows}
+        tableUpdate={tableUpdate}
+      />
+      <Popover
+        open={popperOpen}
+        anchorEl={anchorEl}
+        onClose={() => setPopperOpen(false)}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'left',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+      >
+        <CronIntro />
+      </Popover>
 
       <Paper className={classes.paper}>
         <EnhancedTableToolbar
           numSelected={selected.length}
           onAddJobClick={handleAddJobClick}
+          setAnchorEl={setAnchorEl}
+          setPopperOpen={setPopperOpen}
         />
         <TableContainer>
           <Table
