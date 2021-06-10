@@ -126,10 +126,13 @@ export default function LoginPage(props) {
   }
 
   const handleLoginClick = () => {
-    let server_url = server;
-    if (server === '') {
+    let server_url = server.trim();
+    if (server_url === '') {
       showSnackbar('服务器地址不能为空');
       return;
+    }
+    if (server_url === 'self') {
+      server_url = window.location.href;
     }
     if (server_url.slice(-1) === '/') {
       server_url = server_url.slice(0, -1);
@@ -199,6 +202,16 @@ export default function LoginPage(props) {
               </Grid>
             </Grid>
           </div>
+        </Grid>
+
+        <Grid container alignItems="center" justify="left">
+          <Typography
+            variant="caption"
+            display="block"
+            style={{ color: 'grey', marginLeft: '8px' }}
+          >
+            如果server地址与当前页面地址一致可填self
+          </Typography>
         </Grid>
 
         <div className={classes.loginButton}>
