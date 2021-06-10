@@ -17,6 +17,9 @@ import Empty from './empty';
 import LogCat from '../components/logCat';
 import IconButton from '@material-ui/core/IconButton';
 import RecordStateBadge from './recordStateBadge';
+import Tooltip from '@material-ui/core/Tooltip';
+import RefreshIcon from '@material-ui/icons/Refresh';
+import { getAllRecords } from '../utils/api';
 
 function EnhancedTableHead(props) {
   return (
@@ -76,7 +79,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export default function RecordTable(props) {
-  const rows = props.rows;
+  const { rows, setRows, tableUpdate } = props;
   const classes = useStyles();
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
@@ -98,6 +101,10 @@ export default function RecordTable(props) {
   const emptyRows =
     rowsPerPage - Math.min(rowsPerPage, rows.length - page * rowsPerPage);
 
+  const handleRefreshClick = () => {
+    tableUpdate(Math.round(Math.random() * 100));
+  };
+
   return (
     <div className={classes.root}>
       <LogCat open={logCatOpen} setOpen={setLogCatOpen} />
@@ -111,6 +118,12 @@ export default function RecordTable(props) {
           >
             运行记录
           </Typography>
+
+          <Tooltip title="刷新">
+            <IconButton aria-label="刷新" onClick={handleRefreshClick}>
+              <RefreshIcon />
+            </IconButton>
+          </Tooltip>
         </Toolbar>
 
         <TableContainer>
@@ -135,8 +148,12 @@ export default function RecordTable(props) {
                       <TableCell align="center">
                         <RecordStateBadge stateType={row.state} />
                       </TableCell>
-                      <TableCell align="left">{row.date_start}</TableCell>
-                      <TableCell align="left">{row.date_end}</TableCell>
+                      <TableCell align="left">
+                        {row.date_start.slice(0, 19)}
+                      </TableCell>
+                      <TableCell align="left">
+                        {row.date_end ? row.date_end.slice(0, 19) : null}
+                      </TableCell>
                       <TableCell align="center">
                         <IconButton
                           aria-label="cat-log"

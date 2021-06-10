@@ -19,10 +19,21 @@ import Tooltip from '@material-ui/core/Tooltip';
 import DeleteIcon from '@material-ui/icons/Delete';
 import Empty from './empty';
 import AddJob from './addJob';
-import { Fade, Popover, Popper } from '@material-ui/core';
+import {
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Fade,
+  Popover,
+  Popper,
+} from '@material-ui/core';
 import { CronIntro } from './cronIntro';
 import HelpIcon from '@material-ui/icons/Help';
 import { ControlPoint } from '@material-ui/icons';
+import DialogContentText from '@material-ui/core/DialogContentText';
+import Button from '@material-ui/core/Button';
+import { deleteJobs } from '../utils/api';
 
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -147,27 +158,63 @@ const useToolbarStyles = makeStyles((theme) => ({
 
 const EnhancedTableToolbar = (props) => {
   const classes = useToolbarStyles();
-  const { numSelected, setAnchorEl, setPopperOpen } = props;
+  const { selected, onDeleteClick, setAnchorEl, setPopperOpen } = props;
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
 
   const handleCronHelpClick = (event) => {
     setAnchorEl(event.currentTarget);
     setPopperOpen(true);
   };
 
+  const handleDeleteDialogClose = () => {
+    setDeleteDialogOpen(false);
+  };
+
+  const handleDeleteDialogOpen = () => {
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteDialogAgree = () => {
+    onDeleteClick();
+    setDeleteDialogOpen(false);
+  };
+
   return (
     <Toolbar
       className={clsx(classes.root, {
-        [classes.highlight]: numSelected > 0,
+        [classes.highlight]: selected.length > 0,
       })}
     >
-      {numSelected > 0 ? (
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={handleDeleteDialogClose}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">{'警告'}</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            你选中了{selected.length}
+            条任务。删除后的任务对应的运行记录也会被删除，你将不能再看到任务的历史运行记录和日志。
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDeleteDialogClose} color="primary" autoFocus>
+            取消
+          </Button>
+          <Button onClick={handleDeleteDialogAgree} color="secondary">
+            确定
+          </Button>
+        </DialogActions>
+      </Dialog>
+      {selected.length > 0 ? (
         <Typography
           className={classes.title}
           color="inherit"
           variant="subtitle1"
           component="div"
         >
-          {numSelected} selected
+          已选中 {selected.length} 条
         </Typography>
       ) : (
         <Typography
@@ -180,9 +227,9 @@ const EnhancedTableToolbar = (props) => {
         </Typography>
       )}
 
-      {numSelected > 0 ? (
-        <Tooltip title="Delete">
-          <IconButton aria-label="delete">
+      {selected.length > 0 ? (
+        <Tooltip title="删除">
+          <IconButton aria-label="删除" onClick={handleDeleteDialogOpen}>
             <DeleteIcon />
           </IconButton>
         </Tooltip>
@@ -195,7 +242,7 @@ const EnhancedTableToolbar = (props) => {
           </Tooltip>
           <Tooltip title="新建任务">
             <IconButton aria-label="新建任务" onClick={props.onAddJobClick}>
-              <ControlPoint color="secondary" />
+              <ControlPoint style={{ color: 'rgba(0, 171, 85, 0.85)' }} />
             </IconButton>
           </Tooltip>
         </div>
@@ -205,8 +252,9 @@ const EnhancedTableToolbar = (props) => {
 };
 
 EnhancedTableToolbar.propTypes = {
-  numSelected: PropTypes.number.isRequired,
+  selected: PropTypes.array.isRequired,
   onAddJobClick: PropTypes.func.isRequired,
+  onDeleteClick: PropTypes.func.isRequired,
 };
 
 const useStyles = makeStyles((theme) => ({
@@ -261,19 +309,27 @@ export default function JobTable(props) {
 
   const handleSelectAllClick = (event) => {
     if (event.target.checked) {
-      const newSelecteds = rows.map((n) => n.name);
+      const newSelecteds = rows.map((n) => n.uuid);
       setSelected(newSelecteds);
       return;
     }
     setSelected([]);
   };
 
-  const handleCheck = (event, name) => {
-    const selectedIndex = selected.indexOf(name);
+  const handleDeleteClick = () => {
+    console.log('删除任务', selected);
+    deleteJobs(selected).then((res) => {
+      setSelected([]);
+      tableUpdate(Math.round(Math.random() * 100));
+    });
+  };
+
+  const handleCheck = (event, uuid) => {
+    const selectedIndex = selected.indexOf(uuid);
     let newSelected = [];
 
     if (selectedIndex === -1) {
-      newSelected = newSelected.concat(selected, name);
+      newSelected = newSelected.concat(selected, uuid);
     } else if (selectedIndex === 0) {
       newSelected = newSelected.concat(selected.slice(1));
     } else if (selectedIndex === selected.length - 1) {
@@ -297,7 +353,7 @@ export default function JobTable(props) {
     setPage(0);
   };
 
-  const isSelected = (name) => selected.indexOf(name) !== -1;
+  const isSelected = (uuid) => selected.indexOf(uuid) !== -1;
 
   const emptyRows =
     rowsPerPage - Math.min(rowsPerPage, rows.length - page * rowsPerPage);
@@ -329,10 +385,11 @@ export default function JobTable(props) {
 
       <Paper className={classes.paper}>
         <EnhancedTableToolbar
-          numSelected={selected.length}
+          selected={selected}
           onAddJobClick={handleAddJobClick}
           setAnchorEl={setAnchorEl}
           setPopperOpen={setPopperOpen}
+          onDeleteClick={handleDeleteClick}
         />
         <TableContainer>
           <Table
@@ -354,13 +411,14 @@ export default function JobTable(props) {
               {stableSort(rows, getComparator(order, orderBy))
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((row, index) => {
-                  const isItemSelected = isSelected(row.name);
+                  const isItemSelected = isSelected(row.uuid);
                   const labelId = `enhanced-table-checkbox-${index}`;
 
                   return (
                     <TableRow
                       hover
                       onClick={(event) => null}
+                      // TODO 添加任务详情窗口
                       tabIndex={-1}
                       key={row.uuid}
                       selected={isItemSelected}
@@ -368,7 +426,7 @@ export default function JobTable(props) {
                       <TableCell padding="checkbox">
                         <Checkbox
                           checked={isItemSelected}
-                          onClick={(event) => handleCheck(event, row.name)}
+                          onClick={(event) => handleCheck(event, row.uuid)}
                           inputProps={{ 'aria-labelledby': labelId }}
                         />
                       </TableCell>
@@ -381,9 +439,9 @@ export default function JobTable(props) {
                         {row.name}
                       </TableCell>
                       <TableCell align="left">
-                        {row.cron_exp.length < 10
+                        {row.cron_exp.length < 15
                           ? row.cron_exp
-                          : row.cron_exp.slice(0, 10) + '...'}
+                          : row.cron_exp.slice(0, 15) + '...'}
                       </TableCell>
                       <TableCell align="left">{row.param}</TableCell>
                       <TableCell align="left">
@@ -391,7 +449,9 @@ export default function JobTable(props) {
                           ? row.command
                           : row.command.slice(0, 10) + '...'}
                       </TableCell>
-                      <TableCell align="left">{row.date_create}</TableCell>
+                      <TableCell align="left">
+                        {row.date_create.slice(0, 16)}
+                      </TableCell>
                     </TableRow>
                   );
                 })}

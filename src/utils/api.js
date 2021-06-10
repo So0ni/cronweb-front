@@ -195,7 +195,7 @@ async function getAllRecords(setLogin) {
     if (e.type !== 'APIError') {
       // 非APIError则是网络错误
       delCurrentLogin();
-      setLogin(false);
+      if (setLogin) setLogin(false);
     }
     return null;
   }
@@ -244,4 +244,25 @@ async function addJob(data) {
   }
 }
 
-export { checkConnection, checkSecret, updateTables, addJob };
+async function deleteJobs(uuidList) {
+  const { server, secret } = getCurrentLogin();
+  try {
+    for (let uuid of uuidList) {
+      await request(URI.delJob.uri(server, uuid), URI.delJob.method, secret);
+    }
+    return 0;
+  } catch (e) {
+    if (e.type === 'APIError') {
+      return e.code;
+    }
+  }
+}
+
+export {
+  checkConnection,
+  checkSecret,
+  updateTables,
+  addJob,
+  getAllRecords,
+  deleteJobs,
+};

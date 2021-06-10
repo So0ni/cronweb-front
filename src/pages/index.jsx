@@ -111,6 +111,14 @@ export default function App(props) {
     update();
   }, [tableUpdate]);
 
+  useEffect(() => {
+    const handleInterval = setInterval(
+      () => setTableUpdate(Math.round(Math.random() * 100)),
+      30000,
+    );
+    return () => clearInterval(handleInterval);
+  }, []);
+
   return (
     <Grid container direction="column" justify="flex-start" alignItems="center">
       <Grid container spacing={3}>
@@ -152,7 +160,11 @@ export default function App(props) {
       </Grid>
 
       <Grid className={classes.columnGrid}>
-        <RecordTable rows={recordList} setRows={setRecordList} />
+        <RecordTable
+          rows={recordList}
+          setRows={setRecordList}
+          tableUpdate={setTableUpdate}
+        />
       </Grid>
     </Grid>
   );
