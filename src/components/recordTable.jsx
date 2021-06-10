@@ -84,8 +84,11 @@ export default function RecordTable(props) {
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
   const [logCatOpen, setLogCatOpen] = React.useState(false);
+  const [shotIdLogCat, setShotIdLogCat] = React.useState('');
 
-  const handleLogCatClick = () => {
+  const handleLogCatClick = (shotId) => {
+    console.log('点击日志查看', shotId);
+    setShotIdLogCat(shotId);
     setLogCatOpen(true);
   };
 
@@ -107,7 +110,15 @@ export default function RecordTable(props) {
 
   return (
     <div className={classes.root}>
-      <LogCat open={logCatOpen} setOpen={setLogCatOpen} />
+      {logCatOpen ? (
+        <LogCat
+          open={logCatOpen}
+          setOpen={setLogCatOpen}
+          shotId={shotIdLogCat}
+          setShotId={setShotIdLogCat}
+        />
+      ) : null}
+
       <Paper className={classes.paper}>
         <Toolbar className={classes.titleRoot}>
           <Typography
@@ -158,7 +169,7 @@ export default function RecordTable(props) {
                         <IconButton
                           aria-label="cat-log"
                           size="small"
-                          onClick={handleLogCatClick}
+                          onClick={() => handleLogCatClick(row.shot_id)}
                         >
                           <EventNoteIcon />
                         </IconButton>

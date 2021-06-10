@@ -258,6 +258,20 @@ async function deleteJobs(uuidList) {
   }
 }
 
+async function getLog(shotId) {
+  const { server, secret } = getCurrentLogin();
+  try {
+    const resp = await fetch(URI.getLogByShotId.uri(server, shotId), {
+      headers: { Authorization: `Bearer ${secret}` },
+    });
+    return await resp.text();
+  } catch (e) {
+    if (e.type === 'APIError') {
+      return e.response;
+    }
+  }
+}
+
 export {
   checkConnection,
   checkSecret,
@@ -265,4 +279,5 @@ export {
   addJob,
   getAllRecords,
   deleteJobs,
+  getLog,
 };

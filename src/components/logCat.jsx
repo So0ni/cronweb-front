@@ -9,6 +9,7 @@ import IconButton from '@material-ui/core/IconButton';
 import CloseIcon from '@material-ui/icons/Close';
 import Typography from '@material-ui/core/Typography';
 import { TextareaAutosize } from '@material-ui/core';
+import { getLog } from '../utils/api';
 
 const styles = (theme) => ({
   root: {
@@ -69,15 +70,24 @@ const DialogActions = withStyles((theme) => ({
 }))(MuiDialogActions);
 
 export default function LogCat(props) {
-  const { open, setOpen } = props;
+  const { open, setOpen, setShotId, shotId } = props;
+  const [logContent, setLogContent] = React.useState('');
+  const [refreshLog, setRefreshLog] = React.useState(0);
   const classes = useStyles();
 
-  const handleClickOpen = () => {
-    setOpen(true);
-  };
   const handleClose = () => {
     setOpen(false);
+    setShotId('');
   };
+
+  React.useEffect(() => {
+    if (shotId) {
+      console.log('获取log', shotId);
+      getLog(shotId).then((res) => {
+        setLogContent(res);
+      });
+    }
+  }, [refreshLog]);
 
   return (
     <Dialog onClose={handleClose} open={open}>
@@ -89,15 +99,16 @@ export default function LogCat(props) {
             rowsMax={50}
             rowsMin={25}
             disabled="disabled"
-            defaultValue={'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt\
-              ut labore et dolore magna aliqua.'.repeat(
-              30,
-            )}
+            defaultValue={logContent}
           />
         </div>
       </DialogContent>
       <DialogActions>
-        <Button autoFocus color="primary">
+        <Button
+          autoFocus
+          color="primary"
+          onClick={() => setRefreshLog(Math.round(Math.random() * 100))}
+        >
           刷新
         </Button>
         <Button autoFocus onClick={handleClose} color="default">
