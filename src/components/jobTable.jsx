@@ -257,6 +257,47 @@ EnhancedTableToolbar.propTypes = {
   onDeleteClick: PropTypes.func.isRequired,
 };
 
+function SimpleDialog(props) {
+  const { uuid, setUuid, open, setOpen, jobInfo } = props;
+
+  const handleClose = () => {
+    setOpen(false);
+    setUuid('');
+  };
+
+  return (
+    <Dialog onClose={handleClose} open={open} maxWidth="sm" fullWidth={true}>
+      <DialogTitle>任务详情</DialogTitle>
+      <DialogContent dividers>
+        <Typography variant="subtitle2">任务名</Typography>
+        <Typography variant="subtitle1" style={{ marginBottom: '1.25em' }}>
+          {jobInfo.name}
+        </Typography>
+
+        <Typography variant="subtitle2">Cron表达式</Typography>
+        <Typography variant="subtitle1" style={{ marginBottom: '1.25em' }}>
+          {jobInfo.cron_exp}
+        </Typography>
+
+        <Typography variant="subtitle2">命令</Typography>
+        <Typography variant="subtitle1" style={{ marginBottom: '1.25em' }}>
+          {jobInfo.command}
+        </Typography>
+
+        <Typography variant="subtitle2">参数</Typography>
+        <Typography variant="subtitle1" style={{ marginBottom: '1.25em' }}>
+          {jobInfo.param ? jobInfo.param : '无参数'}
+        </Typography>
+
+        <Typography variant="subtitle2">状态</Typography>
+        <Typography variant="subtitle1" style={{ marginBottom: '1.25em' }}>
+          {jobInfo.active === 1 ? '已启动' : '已停止'}
+        </Typography>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 const useStyles = makeStyles((theme) => ({
   root: {
     width: '100%',
@@ -296,6 +337,17 @@ export default function JobTable(props) {
   const [addJobOpen, setAddJobOpen] = React.useState(false);
   const [anchorEl, setAnchorEl] = React.useState(null);
   const [popperOpen, setPopperOpen] = React.useState(false);
+  const [jobDialogUuid, setJobDialogUuid] = React.useState('');
+  const [jobDialogOpen, setJobDialogOpen] = React.useState(false);
+  const [jobInfo, setJobInfo] = React.useState({
+    uuid: '',
+    name: '',
+    cron_exp: '',
+    command: '',
+    param: '',
+    date_create: '',
+    active: 1,
+  });
 
   const handleAddJobClick = () => {
     setAddJobOpen(true);
@@ -367,6 +419,16 @@ export default function JobTable(props) {
         setJobs={setRows}
         tableUpdate={tableUpdate}
       />
+      {jobDialogOpen ? (
+        <SimpleDialog
+          open={jobDialogOpen}
+          setOpen={setJobDialogOpen}
+          uuid={jobDialogUuid}
+          setUuid={setJobDialogUuid}
+          jobInfo={jobInfo}
+        />
+      ) : null}
+
       <Popover
         open={popperOpen}
         anchorEl={anchorEl}
@@ -417,8 +479,11 @@ export default function JobTable(props) {
                   return (
                     <TableRow
                       hover
-                      onClick={(event) => null}
-                      // TODO 添加任务详情窗口
+                      onClick={(event) => {
+                        setJobDialogUuid(row.uuid);
+                        setJobInfo(row);
+                        setJobDialogOpen(true);
+                      }}
                       tabIndex={-1}
                       key={row.uuid}
                       selected={isItemSelected}
@@ -426,7 +491,10 @@ export default function JobTable(props) {
                       <TableCell padding="checkbox">
                         <Checkbox
                           checked={isItemSelected}
-                          onClick={(event) => handleCheck(event, row.uuid)}
+                          onClick={(event) => {
+                            handleCheck(event, row.uuid);
+                            event.stopPropagation();
+                          }}
                           inputProps={{ 'aria-labelledby': labelId }}
                         />
                       </TableCell>

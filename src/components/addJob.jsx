@@ -62,10 +62,10 @@ export default function AddJob(props) {
       return;
     }
     addJob({
-      name: name,
-      cron_exp: cronExp,
-      command: command,
-      param: param,
+      name: name.trim(),
+      cron_exp: cronExp.trim(),
+      command: command.trim(),
+      param: param.trim(),
     }).then((res) => {
       if (res === 0) {
         tableUpdate(Math.round(Math.random() * 100));
