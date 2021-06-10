@@ -27,13 +27,14 @@ import {
   Fade,
   Popover,
   Popper,
+  Switch,
 } from '@material-ui/core';
 import { CronIntro } from './cronIntro';
 import HelpIcon from '@material-ui/icons/Help';
 import { ControlPoint } from '@material-ui/icons';
 import DialogContentText from '@material-ui/core/DialogContentText';
 import Button from '@material-ui/core/Button';
-import { deleteJobs } from '../utils/api';
+import { deleteJobs, updateJobState } from '../utils/api';
 
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -62,15 +63,53 @@ function stableSort(array, comparator) {
 }
 
 const headCells = [
-  { id: 'name', numeric: false, disablePadding: true, label: '名称' },
-  { id: 'cron_exp', numeric: false, disablePadding: false, label: '定时' },
-  { id: 'param', numeric: false, disablePadding: false, label: '参数' },
-  { id: 'command', numeric: false, disablePadding: false, label: '命令' },
+  {
+    id: 'name',
+    numeric: false,
+    align: 'left',
+    disablePadding: true,
+    label: '名称',
+    sortable: true,
+  },
+  {
+    id: 'cron_exp',
+    numeric: false,
+    align: 'left',
+    disablePadding: false,
+    label: '定时',
+    sortable: true,
+  },
+  {
+    id: 'param',
+    numeric: false,
+    align: 'left',
+    disablePadding: false,
+    label: '参数',
+    sortable: true,
+  },
+  {
+    id: 'command',
+    numeric: false,
+    align: 'left',
+    disablePadding: false,
+    label: '命令',
+    sortable: true,
+  },
   {
     id: 'date_create',
     numeric: false,
+    align: 'left',
     disablePadding: false,
     label: '创建日期',
+    sortable: true,
+  },
+  {
+    id: 'active',
+    numeric: false,
+    align: 'center',
+    disablePadding: true,
+    label: '状态',
+    sortable: false,
   },
 ];
 
@@ -96,29 +135,35 @@ function EnhancedTableHead(props) {
             indeterminate={numSelected > 0 && numSelected < rowCount}
             checked={rowCount > 0 && numSelected === rowCount}
             onChange={onSelectAllClick}
-            inputProps={{ 'aria-label': 'select all desserts' }}
+            inputProps={{ 'aria-label': 'select all jobs' }}
           />
         </TableCell>
 
         {headCells.map((headCell) => (
           <TableCell
             key={headCell.id}
-            align={headCell.numeric ? 'right' : 'left'}
+            align={headCell.align}
             padding={headCell.disablePadding ? 'none' : 'default'}
             sortDirection={orderBy === headCell.id ? order : false}
           >
-            <TableSortLabel
-              active={orderBy === headCell.id}
-              direction={orderBy === headCell.id ? order : 'asc'}
-              onClick={createSortHandler(headCell.id)}
-            >
-              {headCell.label}
-              {orderBy === headCell.id ? (
-                <span className={classes.visuallyHidden}>
-                  {order === 'desc' ? 'sorted descending' : 'sorted ascending'}
-                </span>
-              ) : null}
-            </TableSortLabel>
+            {headCell.sortable ? (
+              <TableSortLabel
+                active={orderBy === headCell.id}
+                direction={orderBy === headCell.id ? order : 'asc'}
+                onClick={createSortHandler(headCell.id)}
+              >
+                {headCell.label}
+                {orderBy === headCell.id ? (
+                  <span className={classes.visuallyHidden}>
+                    {order === 'desc'
+                      ? 'sorted descending'
+                      : 'sorted ascending'}
+                  </span>
+                ) : null}
+              </TableSortLabel>
+            ) : (
+              headCell.label
+            )}
           </TableCell>
         ))}
       </TableRow>
@@ -410,6 +455,13 @@ export default function JobTable(props) {
   const emptyRows =
     rowsPerPage - Math.min(rowsPerPage, rows.length - page * rowsPerPage);
 
+  function handleSwitchJobState(uuid, active) {
+    console.log('修改任务active uuid:', uuid, 'active=', active);
+    updateJobState(uuid, active).then((res) => {
+      tableUpdate(Math.round(Math.random() * 100));
+    });
+  }
+
   return (
     <div className={classes.root}>
       <AddJob
@@ -519,6 +571,22 @@ export default function JobTable(props) {
                       </TableCell>
                       <TableCell align="left">
                         {row.date_create.slice(0, 16)}
+                      </TableCell>
+                      <TableCell
+                        align="center"
+                        onClick={(event) => event.stopPropagation()}
+                      >
+                        <Switch
+                          checked={row.active === 1}
+                          onChange={(event) => {
+                            handleSwitchJobState(
+                              row.uuid,
+                              row.active === 1 ? 0 : 1,
+                            );
+                          }}
+                          color="primary"
+                          name="任务状态"
+                        />
                       </TableCell>
                     </TableRow>
                   );

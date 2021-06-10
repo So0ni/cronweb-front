@@ -38,7 +38,7 @@ const URI = {
     auth: true,
   },
   getAllRecords: {
-    uri: (server) => `${server}/api/logs`,
+    uri: (server) => `${server}/api/logs?limit=200`,
     method: 'GET',
     auth: true,
   },
@@ -50,6 +50,11 @@ const URI = {
   getLogByShotId: {
     uri: (server, shot_id) => `${server}/api/log/${shot_id}`,
     method: 'GET',
+    auth: true,
+  },
+  updateState: {
+    uri: (server, uuid) => `${server}/api/job/${uuid}/active`,
+    method: 'POST',
     auth: true,
   },
 };
@@ -244,6 +249,23 @@ async function addJob(data) {
   }
 }
 
+async function updateJobState(uuid, active) {
+  const { server, secret } = getCurrentLogin();
+  try {
+    await request(
+      URI.updateState.uri(server, uuid),
+      URI.updateState.method,
+      secret,
+      { active: active },
+    );
+    return 0;
+  } catch (e) {
+    if (e.type === 'APIError') {
+      return e.code;
+    }
+  }
+}
+
 async function deleteJobs(uuidList) {
   const { server, secret } = getCurrentLogin();
   try {
@@ -280,4 +302,5 @@ export {
   getAllRecords,
   deleteJobs,
   getLog,
+  updateJobState,
 };
