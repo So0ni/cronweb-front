@@ -574,6 +574,7 @@ export default function JobTable(props) {
                       </TableCell>
                       <TableCell
                         align="center"
+                        padding="none"
                         onClick={(event) => event.stopPropagation()}
                       >
                         <Switch
