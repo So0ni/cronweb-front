@@ -22,19 +22,38 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
+function getLeftMargin() {
+  const { innerWidth } = window;
+  if (innerWidth > 1024) {
+    return Math.round((innerWidth - 1024) / 2);
+  } else {
+    return 0;
+  }
+}
+
 export default (props) => {
   const classes = useStyles();
   const [logged, setLogged] = React.useState(false);
+  const [marginLeft, setMarginLeft] = React.useState(getLeftMargin());
 
   const logout = () => {
     delCurrentLogin();
     setLogged(false);
   };
 
+  React.useEffect(() => {
+    function handleResize() {
+      setMarginLeft(getLeftMargin());
+    }
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   return !logged ? (
     <LoginPage logged={logged} setLogged={setLogged} />
   ) : (
-    <div className={styles.container}>
+    <div className={styles.container} style={{ marginLeft: `${marginLeft}px` }}>
       <div className={classes.root}>
         <AppBar position="static">
           <Toolbar>
