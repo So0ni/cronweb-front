@@ -204,7 +204,7 @@ export default function LoginPage(props) {
           </div>
         </Grid>
 
-        <Grid container alignItems="center" justify="left">
+        <Grid container alignItems="center" justify="flex-start">
           <Typography
             variant="caption"
             display="block"

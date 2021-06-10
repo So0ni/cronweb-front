@@ -8,11 +8,21 @@ const cronString = ` ┌───────────── minute (0 - 59)
  │ │ │ │ │                                   7 is also Sunday on some systems)
  │ │ │ │ │
  │ │ │ │ │
- * * * * * `;
+ * * * * *
+
+ 应用示例
+ 每1分钟          */1 * * * *
+ 每30分钟         */30 * * * *
+ 每2小时          * */2 * * *
+ 每天13:00        0 13 * * *
+ 每天7:15和19:15  15 7,19 * * *
+
+ 错误的用法(歧义): 15,30 7,19 * * *
+ `;
 
 export function CronIntro(props) {
   return (
-    <div style={{ width: '50vw', height: '50vh', overflow: 'scroll' }}>
+    <div style={{ overflow: 'scroll' }}>
       <pre dangerouslySetInnerHTML={{ __html: cronString }} />
     </div>
   );
