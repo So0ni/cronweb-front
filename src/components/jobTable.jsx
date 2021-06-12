@@ -335,7 +335,6 @@ function SimpleDialog(props) {
 
   return (
     <Dialog onClose={handleClose} open={open} maxWidth="sm" fullWidth={true}>
-      3
       <Snackbar
         anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
         open={snackbarOpen}
