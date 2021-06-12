@@ -30,11 +30,14 @@ const useStyles = makeStyles((theme) => ({
     justifyContent: 'center',
     flexDirection: 'column',
     width: '568px',
+    height: '100%',
     maxHeight: '60vh',
   },
   textArea: {
     width: '100%',
+    height: '100%',
     resize: 'none',
+    overflow: 'scroll !important',
   },
 }));
 
