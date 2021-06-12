@@ -57,6 +57,11 @@ const URI = {
     method: 'POST',
     auth: true,
   },
+  triggerJob: {
+    uri: (server, uuid) => `${server}/api/job/${uuid}/trigger`,
+    method: 'POST',
+    auth: true,
+  },
 };
 
 String.prototype.format = function () {
@@ -294,6 +299,22 @@ async function getLog(shotId) {
   }
 }
 
+async function triggerJob(uuid) {
+  const { server, secret } = getCurrentLogin();
+  try {
+    await request(
+      URI.triggerJob.uri(server, uuid),
+      URI.triggerJob.method,
+      secret,
+    );
+    return 0;
+  } catch (e) {
+    if (e.type === 'APIError') {
+      return e.code;
+    }
+  }
+}
+
 export {
   checkConnection,
   checkSecret,
@@ -303,4 +324,5 @@ export {
   deleteJobs,
   getLog,
   updateJobState,
+  triggerJob,
 };

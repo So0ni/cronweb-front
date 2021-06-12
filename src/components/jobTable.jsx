@@ -24,9 +24,8 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  Fade,
   Popover,
-  Popper,
+  Snackbar,
   Switch,
 } from '@material-ui/core';
 import { CronIntro } from './cronIntro';
@@ -34,7 +33,8 @@ import HelpIcon from '@material-ui/icons/Help';
 import { ControlPoint } from '@material-ui/icons';
 import DialogContentText from '@material-ui/core/DialogContentText';
 import Button from '@material-ui/core/Button';
-import { deleteJobs, updateJobState } from '../utils/api';
+import { deleteJobs, triggerJob, updateJobState } from '../utils/api';
+import CloseIcon from '@material-ui/icons/Close';
 
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -304,14 +304,57 @@ EnhancedTableToolbar.propTypes = {
 
 function SimpleDialog(props) {
   const { uuid, setUuid, open, setOpen, jobInfo } = props;
+  const [enableTriggerButton, setEnableTriggerButton] = React.useState(true);
+  const [snackbarOpen, setSnackbarOpen] = React.useState(false);
 
   const handleClose = () => {
     setOpen(false);
+    setEnableTriggerButton(true);
     setUuid('');
+  };
+
+  React.useEffect(() => {
+    const handleTimeout = setTimeout(() => {
+      setEnableTriggerButton(true);
+    }, 3000);
+    return () => clearTimeout(handleTimeout);
+  }, [snackbarOpen]);
+
+  const handleTriggerClick = (_uuid) => {
+    setEnableTriggerButton(false);
+    triggerJob(_uuid).then((res) => {
+      if (res === 0) {
+        setSnackbarOpen(true);
+      }
+    });
+  };
+
+  const handleSnackbarClose = () => {
+    setSnackbarOpen(false);
   };
 
   return (
     <Dialog onClose={handleClose} open={open} maxWidth="sm" fullWidth={true}>
+      3
+      <Snackbar
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+        open={snackbarOpen}
+        onClose={handleSnackbarClose}
+        message="触发成功"
+        autoHideDuration={3000}
+        action={
+          <React.Fragment>
+            <IconButton
+              size="small"
+              aria-label="close"
+              color="inherit"
+              onClick={handleSnackbarClose}
+            >
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </React.Fragment>
+        }
+      />
       <DialogTitle>任务详情</DialogTitle>
       <DialogContent dividers>
         <Typography variant="subtitle2">任务名</Typography>
@@ -339,6 +382,19 @@ function SimpleDialog(props) {
           {jobInfo.active === 1 ? '已启动' : '已停止'}
         </Typography>
       </DialogContent>
+      <DialogActions>
+        <Button
+          onClick={() => handleTriggerClick(uuid)}
+          color="secondary"
+          disabled={!enableTriggerButton}
+          style={{ position: 'absolute', left: '8px' }}
+        >
+          手动触发
+        </Button>
+        <Button onClick={handleClose} color="primary">
+          关闭
+        </Button>
+      </DialogActions>
     </Dialog>
   );
 }
