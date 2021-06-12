@@ -108,6 +108,7 @@ export default function LogCat(props) {
           autoFocus
           color="primary"
           onClick={() => setRefreshLog(Math.round(Math.random() * 100))}
+          style={{ position: 'absolute', left: '8px' }}
         >
           刷新
         </Button>
