@@ -325,7 +325,7 @@ function SimpleDialog(props) {
     triggerJob(_uuid).then((res) => {
       if (res === 0) {
         setSnackbarOpen(true);
-        setTimeout(() => tableUpdate(Math.round(Math.random() * 100)), 3000);
+        setTimeout(() => tableUpdate(Math.round(Math.random() * 100)), 1500);
       }
     });
   };

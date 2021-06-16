@@ -62,6 +62,11 @@ const URI = {
     method: 'POST',
     auth: true,
   },
+  stopRunningJob: {
+    uri: (server, shot_id) => `${server}/api/running_jobs/${shot_id}`,
+    method: 'DELETE',
+    auth: true,
+  },
 };
 
 String.prototype.format = function () {
@@ -315,6 +320,22 @@ async function triggerJob(uuid) {
   }
 }
 
+async function stopRunningJob(shotId) {
+  const { server, secret } = getCurrentLogin();
+  try {
+    await request(
+      URI.stopRunningJob.uri(server, shotId),
+      URI.stopRunningJob.method,
+      secret,
+    );
+    return 0;
+  } catch (e) {
+    if (e.type === 'APIError') {
+      return e.code;
+    }
+  }
+}
+
 export {
   checkConnection,
   checkSecret,
@@ -325,4 +346,5 @@ export {
   getLog,
   updateJobState,
   triggerJob,
+  stopRunningJob,
 };

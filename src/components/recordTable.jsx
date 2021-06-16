@@ -19,7 +19,17 @@ import IconButton from '@material-ui/core/IconButton';
 import RecordStateBadge from './recordStateBadge';
 import Tooltip from '@material-ui/core/Tooltip';
 import RefreshIcon from '@material-ui/icons/Refresh';
-import { getAllRecords } from '../utils/api';
+import { getAllRecords, stopRunningJob } from '../utils/api';
+import { HighlightOff } from '@material-ui/icons';
+import {
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Snackbar,
+} from '@material-ui/core';
+import DialogContentText from '@material-ui/core/DialogContentText';
+import Button from '@material-ui/core/Button';
 
 function EnhancedTableHead(props) {
   return (
@@ -36,6 +46,47 @@ function EnhancedTableHead(props) {
         </TableCell>
       </TableRow>
     </TableHead>
+  );
+}
+
+function StopDialog(props) {
+  const { open, setOpen, shotId, notify, tableUpdate } = props;
+
+  const handleClose = () => {
+    setOpen(false);
+  };
+
+  const handleStopClick = () => {
+    stopRunningJob(shotId).then((res) => {
+      notify('中止成功');
+      setTimeout(() => tableUpdate(Math.round(Math.random() * 100)), 1500);
+      setOpen(false);
+    });
+  };
+
+  return (
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      aria-labelledby="alert-dialog-title"
+      aria-describedby="alert-dialog-description"
+    >
+      <DialogTitle id="alert-dialog-title">{'确定中止任务吗?'}</DialogTitle>
+      {/*<DialogContent>*/}
+      {/*  <DialogContentText id="alert-dialog-description">*/}
+      {/*    Let Google help apps determine location. This means sending anonymous location data to*/}
+      {/*    Google, even when no apps are running.*/}
+      {/*  </DialogContentText>*/}
+      {/*</DialogContent>*/}
+      <DialogActions>
+        <Button onClick={handleClose} color="primary">
+          取消
+        </Button>
+        <Button onClick={handleStopClick} color="primary" autoFocus>
+          确定
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }
 
@@ -85,6 +136,9 @@ export default function RecordTable(props) {
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
   const [logCatOpen, setLogCatOpen] = React.useState(false);
   const [shotIdLogCat, setShotIdLogCat] = React.useState('');
+  const [stopDialogOpen, setStopDialogOpen] = React.useState(false);
+  const [shotIdStop, setShotIdStop] = React.useState('');
+  const [msgNotify, setMsgNotify] = React.useState({ open: false, msg: '' });
 
   const handleLogCatClick = (shotId) => {
     console.log('点击日志查看', shotId);
@@ -108,6 +162,20 @@ export default function RecordTable(props) {
     tableUpdate(Math.round(Math.random() * 100));
   };
 
+  const handleStopClick = (_shotId) => {
+    console.log(_shotId);
+    setShotIdStop(_shotId);
+    setStopDialogOpen(true);
+  };
+
+  const notify = (msg) => {
+    setMsgNotify({ open: true, msg: msg });
+  };
+
+  const notifyClose = () => {
+    setMsgNotify({ open: false, msg: '' });
+  };
+
   return (
     <div className={classes.root}>
       {logCatOpen ? (
@@ -118,7 +186,23 @@ export default function RecordTable(props) {
           setShotId={setShotIdLogCat}
         />
       ) : null}
-
+      {stopDialogOpen ? (
+        <StopDialog
+          open={stopDialogOpen}
+          setOpen={setStopDialogOpen}
+          shotId={shotIdStop}
+          notify={notify}
+          tableUpdate={tableUpdate}
+        />
+      ) : null}
+      {msgNotify.open ? (
+        <Snackbar
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+          open={msgNotify.open}
+          onClose={notifyClose}
+          message={msgNotify.msg}
+        />
+      ) : null}
       <Paper className={classes.paper}>
         <Toolbar className={classes.titleRoot}>
           <Typography
@@ -175,6 +259,19 @@ export default function RecordTable(props) {
                             <EventNoteIcon />
                           </IconButton>
                         </Tooltip>
+                        {row.state === 'RUNNING' ? (
+                          <Tooltip title="停止运行">
+                            <IconButton
+                              aria-label="stop-running"
+                              size="small"
+                              onClick={() => handleStopClick(row.shot_id)}
+                            >
+                              <HighlightOff
+                                style={{ color: 'rgba(255, 72, 66, 0.85)' }}
+                              />
+                            </IconButton>
+                          </Tooltip>
+                        ) : null}
                       </TableCell>
                     </TableRow>
                   );
