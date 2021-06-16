@@ -303,7 +303,7 @@ EnhancedTableToolbar.propTypes = {
 };
 
 function SimpleDialog(props) {
-  const { uuid, setUuid, open, setOpen, jobInfo } = props;
+  const { uuid, setUuid, open, setOpen, jobInfo, tableUpdate } = props;
   const [enableTriggerButton, setEnableTriggerButton] = React.useState(true);
   const [snackbarOpen, setSnackbarOpen] = React.useState(false);
 
@@ -325,6 +325,7 @@ function SimpleDialog(props) {
     triggerJob(_uuid).then((res) => {
       if (res === 0) {
         setSnackbarOpen(true);
+        tableUpdate(Math.round(Math.random() * 100));
       }
     });
   };
@@ -533,6 +534,7 @@ export default function JobTable(props) {
           uuid={jobDialogUuid}
           setUuid={setJobDialogUuid}
           jobInfo={jobInfo}
+          tableUpdate={tableUpdate}
         />
       ) : null}
 

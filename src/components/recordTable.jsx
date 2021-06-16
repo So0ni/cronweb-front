@@ -32,7 +32,7 @@ function EnhancedTableHead(props) {
         <TableCell key="date_start">运行开始</TableCell>
         <TableCell key="date_end">运行结束</TableCell>
         <TableCell key="view_log" align="center">
-          查看日志
+          操作
         </TableCell>
       </TableRow>
     </TableHead>
@@ -166,13 +166,15 @@ export default function RecordTable(props) {
                         {row.date_end ? row.date_end.slice(0, 19) : null}
                       </TableCell>
                       <TableCell align="center">
-                        <IconButton
-                          aria-label="cat-log"
-                          size="small"
-                          onClick={() => handleLogCatClick(row.shot_id)}
-                        >
-                          <EventNoteIcon />
-                        </IconButton>
+                        <Tooltip title="查看日志">
+                          <IconButton
+                            aria-label="cat-log"
+                            size="small"
+                            onClick={() => handleLogCatClick(row.shot_id)}
+                          >
+                            <EventNoteIcon />
+                          </IconButton>
+                        </Tooltip>
                       </TableCell>
                     </TableRow>
                   );

@@ -78,6 +78,20 @@ export default function AddJob(props) {
     });
   };
 
+  const cronParse = (_cronExp) => {
+    if (!_cronExp) {
+      return '';
+    }
+    const cronEle = _cronExp.trim().split(/\s+/);
+    if (cronEle.length === 5) {
+      return `分:${cronEle[0]} 时:${cronEle[1]} 日:${cronEle[2]} 月:${cronEle[3]} 星期:${cronEle[4]} `;
+    }
+    if (cronEle.length === 6) {
+      return `秒:${cronEle[0]} 分:${cronEle[1]} 时:${cronEle[2]} 日:${cronEle[3]} 月:${cronEle[4]}  星期:${cronEle[5]} `;
+    }
+    return 'Cron表达式有误';
+  };
+
   return (
     <Dialog
       open={open}
@@ -134,7 +148,7 @@ export default function AddJob(props) {
           fullWidth
           onBlur={(event) => {
             setCronExp(event.target.value);
-            setCronExpErr({ show: false, msg: '' });
+            setCronExpErr({ show: false, msg: cronParse(event.target.value) });
           }}
           error={cronExpErr.show}
           helperText={cronExpErr.msg}
