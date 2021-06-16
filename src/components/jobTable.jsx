@@ -379,7 +379,7 @@ function SimpleDialog(props) {
 
         <Typography variant="subtitle2">状态</Typography>
         <Typography variant="subtitle1" style={{ marginBottom: '1.25em' }}>
-          {jobInfo.active === 1 ? '已启动' : '已停止'}
+          {jobInfo.active === 1 ? '已启用' : '已禁用'}
         </Typography>
       </DialogContent>
       <DialogActions>
