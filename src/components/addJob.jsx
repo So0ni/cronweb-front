@@ -11,6 +11,7 @@ import { addJob } from '../utils/api';
 import { Snackbar } from '@material-ui/core';
 import CloseIcon from '@material-ui/icons/Close';
 import IconButton from '@material-ui/core/IconButton';
+import { PaperDraggable } from './paperDraggable';
 
 const useStyles = makeStyles((theme) => ({
   inputField: {
@@ -97,6 +98,7 @@ export default function AddJob(props) {
       open={open}
       onClose={handleClose}
       aria-labelledby="form-dialog-title"
+      PaperComponent={PaperDraggable}
     >
       <Snackbar
         anchorOrigin={{
@@ -120,7 +122,7 @@ export default function AddJob(props) {
           </React.Fragment>
         }
       />
-      <DialogTitle id="form-dialog-title">新建任务</DialogTitle>
+      <DialogTitle id="draggable">新建任务</DialogTitle>
       <DialogContent>
         <DialogContentText>
           使用Cron表达式建立一个定时任务。普通参数在命令中填写，填写在参数选项中的内容将会以"--param"的方式传递，

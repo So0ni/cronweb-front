@@ -35,6 +35,7 @@ import DialogContentText from '@material-ui/core/DialogContentText';
 import Button from '@material-ui/core/Button';
 import { deleteJobs, triggerJob, updateJobState } from '../utils/api';
 import CloseIcon from '@material-ui/icons/Close';
+import { PaperDraggable } from './paperDraggable';
 
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -302,10 +303,19 @@ EnhancedTableToolbar.propTypes = {
   onDeleteClick: PropTypes.func.isRequired,
 };
 
+const useSimpleDialogStyles = makeStyles((theme) => ({
+  rowDialog: {
+    marginBottom: '0.7em',
+    paddingBottom: '0.5em',
+    borderBottom: '1px solid rgba(0, 0, 0, 0.12)',
+  },
+}));
+
 function SimpleDialog(props) {
   const { uuid, setUuid, open, setOpen, jobInfo, tableUpdate } = props;
   const [enableTriggerButton, setEnableTriggerButton] = React.useState(true);
   const [snackbarOpen, setSnackbarOpen] = React.useState(false);
+  const classes = useSimpleDialogStyles();
 
   const handleClose = () => {
     setOpen(false);
@@ -335,7 +345,13 @@ function SimpleDialog(props) {
   };
 
   return (
-    <Dialog onClose={handleClose} open={open} maxWidth="sm" fullWidth={true}>
+    <Dialog
+      onClose={handleClose}
+      open={open}
+      maxWidth="sm"
+      fullWidth={true}
+      PaperComponent={PaperDraggable}
+    >
       <Snackbar
         anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
         open={snackbarOpen}
@@ -355,30 +371,30 @@ function SimpleDialog(props) {
           </React.Fragment>
         }
       />
-      <DialogTitle>任务详情</DialogTitle>
+      <DialogTitle id="draggable">任务详情</DialogTitle>
       <DialogContent dividers>
         <Typography variant="subtitle2">任务名</Typography>
-        <Typography variant="subtitle1" style={{ marginBottom: '1.25em' }}>
+        <Typography variant="subtitle1" className={classes.rowDialog}>
           {jobInfo.name}
         </Typography>
 
         <Typography variant="subtitle2">Cron表达式</Typography>
-        <Typography variant="subtitle1" style={{ marginBottom: '1.25em' }}>
+        <Typography variant="subtitle1" className={classes.rowDialog}>
           {jobInfo.cron_exp}
         </Typography>
 
         <Typography variant="subtitle2">命令</Typography>
-        <Typography variant="subtitle1" style={{ marginBottom: '1.25em' }}>
+        <Typography variant="subtitle1" className={classes.rowDialog}>
           {jobInfo.command}
         </Typography>
 
         <Typography variant="subtitle2">参数</Typography>
-        <Typography variant="subtitle1" style={{ marginBottom: '1.25em' }}>
+        <Typography variant="subtitle1" className={classes.rowDialog}>
           {jobInfo.param ? jobInfo.param : '无参数'}
         </Typography>
 
         <Typography variant="subtitle2">状态</Typography>
-        <Typography variant="subtitle1" style={{ marginBottom: '1.25em' }}>
+        <Typography variant="subtitle1">
           {jobInfo.active === 1 ? '已启用' : '已禁用'}
         </Typography>
       </DialogContent>

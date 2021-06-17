@@ -25,6 +25,7 @@
     "@material-ui/icons": "^4.11.2",
     "@umijs/preset-react": "1.x",
     "moment": "^2.29.1",
+    "react-draggable": "^4.4.3",
     "umi": "^3.4.23"
   },
   "devDependencies": {

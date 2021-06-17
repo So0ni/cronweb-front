@@ -10,6 +10,7 @@ import CloseIcon from '@material-ui/icons/Close';
 import Typography from '@material-ui/core/Typography';
 import { TextareaAutosize } from '@material-ui/core';
 import { getLog } from '../utils/api';
+import { PaperDraggable } from './paperDraggable';
 
 const styles = (theme) => ({
   root: {
@@ -93,8 +94,8 @@ export default function LogCat(props) {
   }, [refreshLog]);
 
   return (
-    <Dialog onClose={handleClose} open={open}>
-      <DialogTitle>日志</DialogTitle>
+    <Dialog onClose={handleClose} open={open} PaperComponent={PaperDraggable}>
+      <DialogTitle id="draggable">日志</DialogTitle>
       <DialogContent dividers>
         <div className={classes.logContainer}>
           <TextareaAutosize
