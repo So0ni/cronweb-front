@@ -312,36 +312,33 @@ const useSimpleDialogStyles = makeStyles((theme) => ({
 }));
 
 function SimpleDialog(props) {
-  const { uuid, setUuid, open, setOpen, jobInfo, tableUpdate } = props;
+  const { uuid, setUuid, open, setOpen, jobInfo, tableUpdate, notify } = props;
   const [enableTriggerButton, setEnableTriggerButton] = React.useState(true);
-  const [snackbarOpen, setSnackbarOpen] = React.useState(false);
   const classes = useSimpleDialogStyles();
+  const handlesTimeout = [];
 
   const handleClose = () => {
     setOpen(false);
-    setEnableTriggerButton(true);
     setUuid('');
   };
 
   React.useEffect(() => {
-    const handleTimeout = setTimeout(() => {
-      setEnableTriggerButton(true);
-    }, 3000);
-    return () => clearTimeout(handleTimeout);
-  }, [snackbarOpen]);
+    return () => handlesTimeout.map((handle) => clearTimeout(handle));
+  }, []);
 
   const handleTriggerClick = (_uuid) => {
     setEnableTriggerButton(false);
     triggerJob(_uuid).then((res) => {
       if (res === 0) {
-        setSnackbarOpen(true);
-        setTimeout(() => tableUpdate(Math.round(Math.random() * 100)), 1500);
+        notify('任务触发成功');
+        setTimeout(() => tableUpdate(Math.round(Math.random() * 100)), 1000);
+        handlesTimeout.push(
+          setTimeout(() => {
+            setEnableTriggerButton(true);
+          }, 3000),
+        );
       }
     });
-  };
-
-  const handleSnackbarClose = () => {
-    setSnackbarOpen(false);
   };
 
   return (
@@ -352,25 +349,6 @@ function SimpleDialog(props) {
       fullWidth={true}
       PaperComponent={PaperDraggable}
     >
-      <Snackbar
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-        open={snackbarOpen}
-        onClose={handleSnackbarClose}
-        message="触发成功"
-        autoHideDuration={3000}
-        action={
-          <React.Fragment>
-            <IconButton
-              size="small"
-              aria-label="close"
-              color="inherit"
-              onClick={handleSnackbarClose}
-            >
-              <CloseIcon fontSize="small" />
-            </IconButton>
-          </React.Fragment>
-        }
-      />
       <DialogTitle id="draggable">任务详情</DialogTitle>
       <DialogContent dividers>
         <Typography variant="subtitle2">任务名</Typography>
@@ -465,6 +443,7 @@ export default function JobTable(props) {
     date_create: '',
     active: 1,
   });
+  const [msgNotify, setMsgNotify] = React.useState({ open: false, msg: '' });
 
   const handleAddJobClick = () => {
     setAddJobOpen(true);
@@ -527,12 +506,20 @@ export default function JobTable(props) {
   const emptyRows =
     rowsPerPage - Math.min(rowsPerPage, rows.length - page * rowsPerPage);
 
-  function handleSwitchJobState(uuid, active) {
+  const handleSwitchJobState = (uuid, active) => {
     console.log('修改任务active uuid:', uuid, 'active=', active);
     updateJobState(uuid, active).then((res) => {
       tableUpdate(Math.round(Math.random() * 100));
     });
-  }
+  };
+
+  const handleNotifyClose = () => {
+    setMsgNotify({ open: false, msg: '' });
+  };
+
+  const notify = (msg) => {
+    setMsgNotify({ open: true, msg: msg });
+  };
 
   return (
     <div className={classes.root}>
@@ -542,6 +529,7 @@ export default function JobTable(props) {
         jobs={rows}
         setJobs={setRows}
         tableUpdate={tableUpdate}
+        notify={notify}
       />
       {jobDialogOpen ? (
         <SimpleDialog
@@ -551,6 +539,7 @@ export default function JobTable(props) {
           setUuid={setJobDialogUuid}
           jobInfo={jobInfo}
           tableUpdate={tableUpdate}
+          notify={notify}
         />
       ) : null}
 
@@ -569,6 +558,29 @@ export default function JobTable(props) {
       >
         <CronIntro />
       </Popover>
+
+      <Snackbar
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'left',
+        }}
+        open={msgNotify.open}
+        autoHideDuration={1500}
+        onClose={handleNotifyClose}
+        message={msgNotify.msg}
+        action={
+          <React.Fragment>
+            <IconButton
+              size="small"
+              aria-label="close"
+              color="inherit"
+              onClick={handleNotifyClose}
+            >
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </React.Fragment>
+        }
+      />
 
       <Paper className={classes.paper}>
         <EnhancedTableToolbar

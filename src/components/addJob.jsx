@@ -8,9 +8,6 @@ import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import { makeStyles } from '@material-ui/core/styles';
 import { addJob } from '../utils/api';
-import { Snackbar } from '@material-ui/core';
-import CloseIcon from '@material-ui/icons/Close';
-import IconButton from '@material-ui/core/IconButton';
 import { PaperDraggable } from './paperDraggable';
 
 const useStyles = makeStyles((theme) => ({
@@ -20,8 +17,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export default function AddJob(props) {
-  const { open, setOpen, tableUpdate } = props;
-  const [snackbarOpen, setSnackbarOpen] = React.useState(false);
+  const { open, setOpen, tableUpdate, notify } = props;
 
   const [name, setName] = React.useState('');
   const [cronExp, setCronExp] = React.useState('');
@@ -39,10 +35,6 @@ export default function AddJob(props) {
       return;
     }
     setOpen(false);
-  };
-
-  const handleSnackbarClose = () => {
-    setSnackbarOpen(false);
   };
 
   const handleSubmitClick = () => {
@@ -70,6 +62,7 @@ export default function AddJob(props) {
     }).then((res) => {
       if (res === 0) {
         tableUpdate(Math.round(Math.random() * 100));
+        notify('任务添加成功');
         setOpen(false);
         return;
       }
@@ -100,28 +93,6 @@ export default function AddJob(props) {
       aria-labelledby="form-dialog-title"
       PaperComponent={PaperDraggable}
     >
-      <Snackbar
-        anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'center',
-        }}
-        open={snackbarOpen}
-        autoHideDuration={1500}
-        onClose={handleSnackbarClose}
-        message="任务添加成功"
-        action={
-          <React.Fragment>
-            <IconButton
-              size="small"
-              aria-label="close"
-              color="inherit"
-              onClick={handleSnackbarClose}
-            >
-              <CloseIcon fontSize="small" />
-            </IconButton>
-          </React.Fragment>
-        }
-      />
       <DialogTitle id="draggable">新建任务</DialogTitle>
       <DialogContent>
         <DialogContentText>
