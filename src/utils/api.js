@@ -218,6 +218,9 @@ async function getAllRecords(setLogin) {
 
 async function updateTables(setLogin, setJobList, setRecordList, setBreadInfo) {
   const jobList = await getAllJobs(setLogin);
+  if (jobList === null) {
+    return;
+  }
   setJobList(jobList);
   const recordList = await getAllRecords(setLogin);
   setRecordList(recordList);
