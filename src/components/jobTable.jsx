@@ -36,6 +36,7 @@ import Button from '@material-ui/core/Button';
 import { deleteJobs, triggerJob, updateJobState } from '../utils/api';
 import CloseIcon from '@material-ui/icons/Close';
 import { PaperDraggable } from './paperDraggable';
+import { getCurrentLogin } from '../utils/storage';
 
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -316,6 +317,7 @@ function SimpleDialog(props) {
   const [enableTriggerButton, setEnableTriggerButton] = React.useState(true);
   const classes = useSimpleDialogStyles();
   const handlesTimeout = [];
+  const triggerURLPrefix = `${getCurrentLogin().server}/api/trigger_job/`;
 
   const handleClose = () => {
     setOpen(false);
@@ -372,8 +374,13 @@ function SimpleDialog(props) {
         </Typography>
 
         <Typography variant="subtitle2">状态</Typography>
-        <Typography variant="subtitle1">
+        <Typography variant="subtitle1" className={classes.rowDialog}>
           {jobInfo.active === 1 ? '已启用' : '已禁用'}
+        </Typography>
+
+        <Typography variant="subtitle2">触发链接(POST请求)</Typography>
+        <Typography variant="caption" display="block">
+          {`${triggerURLPrefix}${jobInfo.uuid}`}
         </Typography>
       </DialogContent>
       <DialogActions>
